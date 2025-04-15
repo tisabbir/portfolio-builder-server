@@ -1,9 +1,13 @@
-import express from "express";
+import express, { Request, Response, Router } from "express";
+import asyncHandler from "express-async-handler";
 import { Portfolio } from "../models/Portfolio";
-const router = express.Router();
 
-router.post("/", async (req, res) => {
-  try {
+const router: Router = express.Router();
+
+// POST /api/portfolio
+router.post(
+  "/",
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { projectsData, experienceData, educationData, ...rest } = req.body;
 
     const newPortfolio = new Portfolio({
@@ -14,11 +18,22 @@ router.post("/", async (req, res) => {
     });
 
     const savedPortfolio = await newPortfolio.save();
+    // Instead of returning a value, simply send the response.
     res.status(201).json(savedPortfolio);
-  } catch (err) {
-    console.error("Error saving portfolio:", err);
-    res.status(500).json({ error: "Failed to save portfolio" });
-  }
-});
+  })
+);
+
+// GET /api/portfolio/:id
+router.get(
+  "/:id",
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const portfolio = await Portfolio.findById(req.params.id);
+    if (!portfolio) {
+      res.status(404).json({ error: "Portfolio not found" });
+      return;
+    }
+    res.json(portfolio);
+  })
+);
 
 export default router;
